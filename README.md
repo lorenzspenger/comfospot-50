@@ -29,3 +29,8 @@ All functions which can be controlled from the control panel can be controlled f
 * reset filter
 
 While all of these functions can be controlled from within HA, the control panel remains fully functional, and every state change triggered on the device itself will be reflected in HA.
+
+### TO DO: 
+* Add Gerber files
+* Add BOM
+* Add YAML
