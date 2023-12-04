@@ -1,0 +1,56 @@
+substitutions:
+  device_name:              Lüftung xxx
+  friendly_name_fan:        Lüftung xxx
+  gpio_led1:                GPIO0
+  gpio_led2:                GPIO3
+  gpio_led3:                GPIO1
+  gpio_led4:                GPIO4
+  gpio_led_filter_change:   GPIO7
+  gpio_led_error:           GPIO10  
+  gpio_output_plus:         GPIO5
+  gpio_output_minus:        GPIO6
+  gpio_status_led:          GPIO8
+
+packages:
+  restart_buttons:        !include restart.yaml
+  comfospot_50:           !include Comfospot_50.yaml
+  status led:             !include status_led.yaml
+
+esphome:
+  name: luftung-xxx
+  friendly_name: Lüftung xxx
+  platformio_options: 
+    board_build.flash_mode: dio
+    board_build.f_cpu: 80000000L
+
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+    sdkconfig_options: 
+      CONFIG_ESP32C3_DEFAULT_CPU_FREQ_MHZ: "80"
+      CONFIG_ESP32C3_DEFAULT_CPU_FREQ_80: y
+
+# Enable logging
+logger:
+  hardware_uart: USB_SERIAL_JTAG # not working since GPIO18 and GPIO19 are used
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # power_save_mode: high
+  # output_power: 8.5
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Luftung-xxx"
+    password: ""

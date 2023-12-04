@@ -1,0 +1,22 @@
+---
+    #
+    # The restart button platform allows you to restart your node remotely through
+    # Home Assistant.
+    #
+    # I wish there was a single service for this, by default...
+    #
+    # https://esphome.io/components/button/restart.html
+    #
+button:
+  - platform: restart
+    id: _restart
+    name: Restart
+  - platform: safe_mode
+    id: _safe_mode
+    name: Enter Safe Mode
+  - platform: shutdown
+    id: _shutdown
+    name: Shutdown
+  - platform: factory_reset
+    id: _factory_reset
+    name: Restart with Factory Default Settings
