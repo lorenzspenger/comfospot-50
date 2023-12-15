@@ -5,8 +5,8 @@ substitutions:
   gpio_led2:                GPIO3
   gpio_led3:                GPIO1
   gpio_led4:                GPIO4
-  gpio_led_filter_change:   GPIO7
-  gpio_led_error:           GPIO10  
+  gpio_led_filter_change:   GPIO10
+  gpio_led_error:           GPIO7 
   gpio_output_plus:         GPIO5
   gpio_output_minus:        GPIO6
   gpio_status_led:          GPIO8
