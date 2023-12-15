@@ -34,7 +34,7 @@ esp32:
 
 # Enable logging
 logger:
-  hardware_uart: USB_SERIAL_JTAG # not working since GPIO18 and GPIO19 are used
+  hardware_uart: USB_SERIAL_JTAG
 
 # Enable Home Assistant API
 api:
