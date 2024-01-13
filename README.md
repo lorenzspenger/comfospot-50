@@ -37,7 +37,11 @@ All functions which can be controlled from the control panel can be controlled f
 
 While all of these functions can be controlled from within HA, the control panel remains fully functional, and every state change triggered on the device itself will be reflected in HA.
 
-### TO DO: 
+**Limitation**: Deactivating the fans (standby mode) is disabled per default.
+Unfortunately the standby mode also cuts off the power supply of the microcontroller and then reenabling the fans remotely is not possible any more. A physical button press is required.
+This protection can be controlled via the 'Turn Off locked' switch.
+
+### TO DO:
 * ~~Add Gerber files~~
 * Add BOM
 * ~~Add YAML~~
