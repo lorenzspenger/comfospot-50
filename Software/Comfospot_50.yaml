@@ -546,6 +546,7 @@ binary_sensor:
       number: ${gpio_output_minus}
       inverted: true
       mode: INPUT_OUTPUT_OPEN_DRAIN
+      allow_other_uses: true
     name: 'Ventilation -'
     filters:
       - delayed_on_off: 50ms
@@ -563,6 +564,7 @@ binary_sensor:
       number: ${gpio_output_plus}
       inverted: true
       mode: INPUT_OUTPUT_OPEN_DRAIN
+      allow_other_uses: true
     name: 'Ventilation +'
     filters:
       - delayed_on_off: 50ms 
@@ -627,6 +629,7 @@ output:
     pin: 
       number: ${gpio_output_plus}
       mode: INPUT_OUTPUT_OPEN_DRAIN
+      allow_other_uses: true
     id: 'ventilation_plus'
     inverted: true
 
@@ -634,6 +637,7 @@ output:
     pin: 
       number: ${gpio_output_minus}
       mode: INPUT_OUTPUT_OPEN_DRAIN
+      allow_other_uses: true
     id: 'ventilation_minus'
     inverted: true
 
