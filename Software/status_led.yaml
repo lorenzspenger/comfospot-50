@@ -11,7 +11,7 @@
 ######################################################
 
 status_led:
-  pin:
+  pin: 
     number: ${gpio_status_led}
     inverted: true
     ignore_strapping_warning: true

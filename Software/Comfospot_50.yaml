@@ -13,13 +13,14 @@
 #   gpio_led3:                GPIO1
 #   gpio_led4:                GPIO4
 #   gpio_led_filter_change:   GPIO10
-#   gpio_led_error:           GPIO7
+#   gpio_led_error:           GPIO7  
 #   gpio_output_plus:         GPIO19
 #   gpio_output_minus:        GPIO18
 
 
 ######################################################
 ######################################################
+
 
 esphome:
   on_shutdown:
@@ -31,7 +32,7 @@ esphome:
     then:
       - script.execute: init
 
-      # initialize filter runtime
+# initialize filter runtime
       - if:
           condition:
             - lambda: 'return id(timestamp_last_filter_change) == 0;'
@@ -83,6 +84,9 @@ globals:
     initial_value: 'false'
 
 
+
+
+
 script:
   - id: retrieve_fan_speed
     mode: parallel
@@ -90,14 +94,14 @@ script:
       - logger.log: "Checking fan speed..."
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1250ms
               condition:
                 binary_sensor.is_off: led_error
           timeout: 6500ms
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1250ms
               condition:
                 binary_sensor.is_on: led_1
@@ -115,11 +119,11 @@ script:
       # - lambda: |-
       #     auto call = id(_fan).turn_on();
       #     call.set_speed(id(current_fan_speed));
-      #     call.perform();
+      #     call.perform(); 
       - delay: 10ms
-      - logger.log:
+      - logger.log: 
           format: "Retrieved speed: %d"
-          args: ['id(current_fan_speed)']
+          args: [ 'id(current_fan_speed)' ]
 
 
   - id: set_fan_speed
@@ -143,20 +147,20 @@ script:
             - script.execute: retrieve_fan_speed
             - delay: 100ms
             - script.wait: retrieve_fan_speed
-      # make sure no other component / user is using the buttons
+        # make sure no other component / user is using the buttons
       - wait_until:
           condition:
             for:
               time: 3s
               condition:
                 and:
-                  - binary_sensor.is_off: ventilation_plus_binary_sensor
-                  - binary_sensor.is_off: ventilation_minus_binary_sensor
+                - binary_sensor.is_off: ventilation_plus_binary_sensor
+                - binary_sensor.is_off: ventilation_minus_binary_sensor
           timeout: 11s
       - lambda: "id(speed_diff) = set_speed - id(current_fan_speed);"
       - logger.log:
           format: "speed_diff: %d"
-          args: ['id(speed_diff)']
+          args: [ 'id(speed_diff)' ]
       - if:
           condition:
             lambda: "return id(speed_diff) < 0;"
@@ -164,7 +168,7 @@ script:
             # turn on Bedienfeld
             - if:
                 condition:
-                  for:
+                  for: 
                     time: 750ms
                     condition:
                       lambda: "return (!(id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state) && id(current_fan_speed) != 0);"
@@ -184,7 +188,7 @@ script:
             # turn on Bedienfeld
             - if:
                 condition:
-                  for:
+                  for: 
                     time: 750ms
                     condition:
                       lambda: "return (!(id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state) && id(current_fan_speed) != 0);"
@@ -202,6 +206,7 @@ script:
       - script.execute: retrieve_fan_speed
 
 
+
   - id: button_press
     mode: restart
     then:
@@ -210,7 +215,7 @@ script:
             lambda: return id(button_manipulation);
           then:
           else:
-            - delay: 250ms  # wait for led to come on
+            - delay: 250ms # wait for led to come on
             # when fan is turned off through buttons, reflect this
             - if:
                 condition:
@@ -222,32 +227,32 @@ script:
                   - lambda: |-
                       auto call = id(_fan).turn_off();
                       call.set_speed(id(current_set_speed));  // set last set speed for next turn on
-                      call.perform();
+                      call.perform(); 
                   - lambda: id(current_fan_speed) = 0;
-                  - delay: 100ms  # allow fan to be set successfully in ui
+                  - delay: 100ms # allow fan to be set successfully in ui
                   - switch.turn_on: turn_off_lock
                   - logger.log: 'fan turned off'
                 else:
-                  # reflect new fan speed when changed through buttons on device
+                # reflect new fan speed when changed through buttons on device
                   - logger.log: 'fan speed read because button has been pressed'
                   - script.execute: retrieve_fan_speed
                   - script.wait: retrieve_fan_speed
                   - lambda: |-
                       auto call = id(_fan).turn_on();
                       call.set_speed(id(current_fan_speed));
-                      call.perform();
+                      call.perform(); 
                   - lambda: id(current_set_speed) = id(current_fan_speed);
                   - logger.log: 'variables id(current_set_speed) = id(current_fan_speed) aligned'
 
 
-  #  Not sure if I should wait for set_fan_speed script to finish, since these two could interfere with the button presses
+      #  Not sure if I should wait for set_fan_speed script to finish, since these two could interfere with the button presses
   - id: toggle_exhaust
     mode: single
     then:
       - lambda: id(button_manipulation) = true;
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1000ms
               condition:
                 lambda: "return (!(id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state));"
@@ -276,6 +281,7 @@ script:
       - script.stop: check_exhaust_active
       - logger.log: "script toggle_exhaust: finished"
       - lambda: id(button_manipulation) = false;
+      
 
 
   - id: toggle_intake
@@ -284,7 +290,7 @@ script:
       - lambda: id(button_manipulation) = true;
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1000ms
               condition:
                 lambda: "return (!(id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state));"
@@ -313,7 +319,7 @@ script:
       - script.stop: check_exhaust_active
       - logger.log: "script toggle_intake: finished"
       - lambda: id(button_manipulation) = false;
-
+   
 
   - id: check_intake_active
     mode: parallel
@@ -325,14 +331,14 @@ script:
           condition:
             binary_sensor.is_off: led_4
           timeout: 750ms
-      - if:
+      - if: 
           condition:
             binary_sensor.is_on: led_4
           then:
             - logger.log: "checking for fan mode intake - LED4 still on, aborting"
             - script.stop: check_intake_active
       - logger.log: "checking for fan mode intake - LED4 turned off 750ms delay started"
-      - delay: 750ms  # to be safe it turned on again already
+      - delay: 750ms # to be safe it turned on again already
       - logger.log: "checking for fan mode intake - checking if LED4 turned on again"
       - if:
           condition:
@@ -345,7 +351,7 @@ script:
           else:
             - logger.log: "checking for fan mode intake - LED4 still off, mode not set"
       - logger.log: "checking for fan mode intake - finished"
-
+                
 
   - id: check_exhaust_active
     mode: parallel
@@ -359,14 +365,14 @@ script:
           timeout: 750ms
       - if:
           condition:
-            binary_sensor.is_on: led_1
+              binary_sensor.is_on: led_1
           then:
             - logger.log: "checking for fan mode exhaust - LED1 still on, aborting"
             - script.stop: check_exhaust_active
       - logger.log: "checking for fan mode exhaust - LED1 turned off 750ms delay started"
-      - delay: 750ms  # to be safe it turned on again already
+      - delay: 750ms # to be safe it turned on again already
       - logger.log: "checking for fan mode exhaust - checking if LED1 turned on again"
-      - if:
+      - if: 
           condition:
             lambda: "return ((id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state));"
           then:
@@ -387,7 +393,7 @@ script:
           state: 0
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1000ms
               condition:
                 lambda: "return (!(id(led_1).state) && !(id(led_2).state) && !(id(led_3).state) && !(id(led_4).state));"
@@ -406,7 +412,7 @@ script:
       - output.turn_off: ventilation_minus
       - wait_until:
           condition:
-            for:
+            for: 
               time: 1000ms
               condition:
                 lambda: "return !(id(filter_change_needed).state);"
@@ -434,18 +440,19 @@ script:
             - lambda: |-
                 auto call = id(_fan).turn_on();
                 call.set_speed(1);
-                call.perform();
+                call.perform(); 
       - lambda: id(button_manipulation) = false;
 
 
+            
 binary_sensor:
 
-  # LEDs
+  #LEDs
   - platform: gpio
     id: led_1
     internal: true
     entity_category: "diagnostic"
-    pin:
+    pin: 
       number: ${gpio_led1}
       inverted: true
       mode:
@@ -463,7 +470,7 @@ binary_sensor:
     id: led_2
     internal: true
     entity_category: "diagnostic"
-    pin:
+    pin: 
       number: ${gpio_led2}
       inverted: true
       mode:
@@ -476,7 +483,7 @@ binary_sensor:
     id: led_3
     internal: true
     entity_category: "diagnostic"
-    pin:
+    pin: 
       number: ${gpio_led3}
       inverted: true
       mode:
@@ -489,7 +496,7 @@ binary_sensor:
     id: led_4
     internal: true
     entity_category: "diagnostic"
-    pin:
+    pin: 
       number: ${gpio_led4}
       inverted: true
       mode:
@@ -506,7 +513,7 @@ binary_sensor:
     id: filter_change_needed
     internal: false
     device_class: PROBLEM
-    pin:
+    pin: 
       number: ${gpio_led_filter_change}
       inverted: true
       mode:
@@ -520,7 +527,7 @@ binary_sensor:
     id: led_error
     internal: false
     device_class: PROBLEM
-    pin:
+    pin: 
       number: ${gpio_led_error}
       inverted: true
       mode:
@@ -530,12 +537,12 @@ binary_sensor:
     filters:
       - delayed_on_off: 50ms
 
-  # Buttons
+# Buttons
   - platform: gpio
     entity_category: "diagnostic"
     internal: true
     id: ventilation_minus_binary_sensor
-    pin:
+    pin: 
       number: ${gpio_output_minus}
       inverted: true
       mode: INPUT_OUTPUT_OPEN_DRAIN
@@ -553,14 +560,14 @@ binary_sensor:
     entity_category: "diagnostic"
     internal: true
     id: ventilation_plus_binary_sensor
-    pin:
+    pin: 
       number: ${gpio_output_plus}
       inverted: true
       mode: INPUT_OUTPUT_OPEN_DRAIN
       allow_other_uses: true
     name: 'Ventilation +'
     filters:
-      - delayed_on_off: 50ms
+      - delayed_on_off: 50ms 
     on_click:
       min_length: 0ms
       max_length: 500ms
@@ -568,7 +575,7 @@ binary_sensor:
         - script.execute: button_press
 
 
-  # intake und exhaust sensor
+# intake und exhaust sensor
   - platform: template
     name: "intake active"
     internal: true
@@ -580,13 +587,13 @@ binary_sensor:
       }
     # reflect state in select
     on_press:
-      then:
+      then: 
         - lambda: 'id(mode).publish_state("Intake");'
         - globals.set:
             id: direction
             value: '1'
     on_release:
-      then:
+      then: 
         - lambda: 'id(mode).publish_state("Exchange");'
         - globals.set:
             id: direction
@@ -601,15 +608,15 @@ binary_sensor:
       } else {
         return false;
       }
-    # reflect state in select
+  # reflect state in select
     on_press:
-      then:
+      then: 
         - lambda: 'id(mode).publish_state("Exhaust");'
         - globals.set:
             id: direction
             value: '2'
     on_release:
-      then:
+      then: 
         - lambda: 'id(mode).publish_state("Exchange");'
         - globals.set:
             id: direction
@@ -619,7 +626,7 @@ binary_sensor:
 output:
   # Buttons
   - platform: gpio
-    pin:
+    pin: 
       number: ${gpio_output_plus}
       mode: INPUT_OUTPUT_OPEN_DRAIN
       allow_other_uses: true
@@ -627,7 +634,7 @@ output:
     inverted: true
 
   - platform: gpio
-    pin:
+    pin: 
       number: ${gpio_output_minus}
       mode: INPUT_OUTPUT_OPEN_DRAIN
       allow_other_uses: true
@@ -642,32 +649,35 @@ output:
     zero_means_zero: true
     write_action:
       then:
-        - globals.set:
-            id: current_set_speed
-            value: !lambda "return (state * 4);"  # I use the values 1-4 internally
-        - if:
-            condition:
-              lambda: return id(current_set_speed) == id(current_fan_speed);
-            then:
-              - logger.log: 'fan speed already set correctly'
-            else:
-              - if:
-                  condition:
-                    lambda: "return (id(current_set_speed) == 0 && (id(turn_off_lock).state));"
-                  then:
-                    - logger.log: "remote turn off not allowed!"
-                    - delay: 250ms
-                    - lambda: |-
-                        auto call = id(_fan).turn_on();
-                        call.set_speed(id(current_fan_speed));
-                        call.perform();
-                  else:
-                    - logger.log:
-                        format: "Set speed: %d"
-                        args: ['id(current_set_speed)']
-                    - script.execute:
-                        id: set_fan_speed
-                        set_speed: !lambda return id(current_set_speed);
+      - globals.set:
+          id: current_set_speed
+          value: !lambda "return (state * 4);" # I use the values 1-4 internally
+      - if:
+          condition:
+            lambda: return id(current_set_speed) == id(current_fan_speed);
+          then:
+            - logger.log: 'fan speed already set correctly'
+          else:
+          - if:
+              condition:
+                lambda: "return (id(current_set_speed) == 0 && (id(turn_off_lock).state));"
+              then:
+                - logger.log: "remote turn off not allowed!"
+                - delay: 250ms
+                - lambda: |-
+                    auto call = id(_fan).turn_on();
+                    call.set_speed(id(current_fan_speed));
+                    call.perform();
+              else:
+                - logger.log:
+                    format: "Set speed: %d"
+                    args: [ 'id(current_set_speed)' ]
+                - script.execute: 
+                    id: set_fan_speed
+                    set_speed: !lambda return id(current_set_speed);
+
+
+
 
 
 button:
@@ -716,6 +726,8 @@ button:
       - script.execute: reset_filter_script
 
 
+
+
 sensor:
   - platform: template
     id: sensor_current_fan_speed
@@ -748,6 +760,7 @@ fan:
     id: _fan
 
 
+
 select:
   # direction select
   - platform: template
@@ -755,15 +768,15 @@ select:
     name: 'Direction'
     id: mode
     options:
-      - 'Exchange'
-      - 'Intake'
-      - 'Exhaust'
+     - 'Exchange'
+     - 'Intake'
+     - 'Exhaust'
     initial_option: Exchange
     # optimistic: true
     set_action:
       - logger.log:
           format: "Chosen option: %s"
-          args: ["x.c_str()"]
+          args: ["x.c_str()"] 
       - lambda: |-
           if (x == "Exchange") {
             // same button has to be used to deactivate mode, otherwise it changes to the toggled mode
@@ -785,8 +798,8 @@ select:
             }
           }
 
-switch:
-  # represent locked turn off in ui
+switch:    
+   # represent locked turn off in ui
   - platform: template
     entity_category: 'config'
     name: "Turn Off locked"
@@ -795,8 +808,8 @@ switch:
     restore_mode: ALWAYS_ON
     icon: mdi:lock-reset
 
-  # this one is actually used internally and reflects state of ui toggle
-  # except when the actual buttons are pressed
+  # this one is actually used internally and reflects state of ui toggle 
+  # except when the actual buttons are pressed 
   # to allow for turn off on device
   - platform: template
     internal: true
