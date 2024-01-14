@@ -443,6 +443,22 @@ script:
                 call.perform(); 
       - lambda: id(button_manipulation) = false;
 
+  - id: intake_impossible
+    mode: single
+    then:
+      - lambda: 'id(mode).publish_state("Intake");'
+      - lambda: 'id(mode).publish_state("Exchange");'
+      - globals.set:
+          id: direction
+          value: '0'
+      - homeassistant.service:
+          service: persistent_notification.create
+          data:
+            title: ${device_name}
+          data_template:
+            message: Fan direction Intake could not be set (Probably due to cold temperatures outside)
+      - delay: 5s # cooldown to not send multiple notifications on error led toggling
+
 
             
 binary_sensor:
@@ -536,6 +552,14 @@ binary_sensor:
     name: 'Error LED'
     filters:
       - delayed_on_off: 50ms
+    on_press:
+      then:
+      - if:
+          condition:
+            and:
+              - script.is_running: toggle_intake
+          then:
+            - script.execute: intake_impossible
 
 # Buttons
   - platform: gpio
