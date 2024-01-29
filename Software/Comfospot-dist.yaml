@@ -22,7 +22,6 @@ esphome:
   platformio_options: 
     board_build.flash_mode: dio
     board_build.f_cpu: 80000000L
-  name_add_mac_suffix: true
 
   project:
     name: thatslolo.comfospot-50
@@ -43,38 +42,21 @@ logger:
 
 # Enable Home Assistant API
 api:
-  # on_client_connected:
-  #   - ble.disable:
-
 
 ota:
 
 dashboard_import:
-  package_import_url: github://thatslolo/comfospot-50/blob/esphome-temp/Software/Comfospot-dist.yaml
+  package_import_url: github://esphome/esphome-project-template/project-template-esp32.yaml@v6
   import_full_config: false # or true
 
 wifi:
   ap:
+    ssid: "Comfospot"
     password: ""
-  # on_connect:
-  #   then:
-  #   - wait_until:
-  #       condition:
-  #         wifi.connected:
-  #       timeout: 8s
-  #   - if:
-  #       condition:
-  #         wifi.connected:
-  #       then:
-  #       - delay: 5s
-  #       - ble.disable:
 
 captive_portal:
 
-# esp32_improv:
-#   authorizer: false
+esp32_improv:
+  authorizer: none
 
-# improv_serial:
-
-# esp32_ble:
-#   enable_on_boot: false
+improv_serial:
