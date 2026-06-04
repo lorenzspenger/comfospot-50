@@ -1,0 +1,88 @@
+---
+# MQTT variant of the Comfospot 50 controller.
+#
+# Use this instead of lftung_xxx.yaml / Comfospot-dist.yaml when you want to
+# integrate the device via MQTT (e.g. Domoticz) instead of the native
+# Home Assistant API.
+#
+# This is a fully Home-Assistant-free build. The shared Comfospot_50.yaml is
+# reused unchanged; the two HA-specific bits it contains are overridden here
+# via ESPHome package overrides (!remove), so no `api:` component is needed:
+#   * an `mqtt:` block with Home-Assistant-style discovery is added, which
+#     Domoticz' "MQTT Auto Discovery Client Gateway" understands out of the box.
+#   * the time source is switched from `homeassistant` to `sntp` (see `time:`
+#     below), because without the HA API there is no clock to drive the filter
+#     runtime calculation.
+#   * the small `notify_intake_impossible` script (called by intake_impossible
+#     in the package) is overridden (see `script:` below) to replace its
+#     `homeassistant.service` notification call -- which would otherwise require
+#     the `api:` component -- with a plain log line.
+# OTA still works (own `ota:` component); view logs over serial/USB or MQTT.
+substitutions:
+  device_name: Comfospot MQTT
+  friendly_name_fan: Comfospot MQTT
+  gpio_led1: GPIO0
+  gpio_led2: GPIO3
+  gpio_led3: GPIO1
+  gpio_led4: GPIO4
+  gpio_led_filter_change: GPIO10
+  gpio_led_error: GPIO7
+  gpio_output_plus: GPIO5
+  gpio_output_minus: GPIO6
+  gpio_status_led: GPIO8
+packages:
+  restart_buttons: !include restart.yaml
+  comfospot_50: !include Comfospot_50.yaml
+  status led: !include status_led.yaml
+esphome:
+  name: comfospot-mqtt
+  friendly_name: Comfospot MQTT
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.f_cpu: 80000000L
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32C3_DEFAULT_CPU_FREQ_MHZ: '80'
+      CONFIG_ESP32C3_DEFAULT_CPU_FREQ_80: y
+# Enable logging
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+ota:
+  platform: esphome
+  password: !secret ota_password
+# MQTT integration for Domoticz / generic brokers.
+mqtt:
+  broker: !secret mqtt_broker
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  # Domoticz' MQTT Auto Discovery gateway expects this exact prefix.
+  discovery: true
+  discovery_prefix: homeassistant
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: Comfospot-MQTT
+    password: ''
+captive_portal:
+# Override the time source defined in the shared Comfospot_50.yaml package:
+# drop the Home-Assistant-API clock and replace it with NTP, keeping the same
+# id (my_time) so all package scripts keep working unchanged.
+time:
+  - id: !remove my_time
+  - platform: sntp
+    id: my_time
+    timezone: Europe/Berlin
+# Override only the notification helper from the shared package: drop the
+# homeassistant.service call (which needs the api: component) and log instead.
+# intake_impossible itself stays in the package and keeps calling this script.
+script:
+  - id: !remove notify_intake_impossible
+  - id: notify_intake_impossible
+    then:
+      - logger.log: "Fan direction Intake could not be set on ${device_name} (probably due to cold temperatures outside)"
