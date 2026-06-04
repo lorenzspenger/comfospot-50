@@ -468,13 +468,21 @@ script:
       - globals.set:
           id: direction
           value: '0'
+      - script.execute: notify_intake_impossible
+      - delay: 5s # cooldown to not send multiple notifications on error led toggling
+
+  # Notification shown when the intake direction can't be set. Kept in its own
+  # script so API-free builds (e.g. MQTT/Domoticz, no `api:` component) can
+  # override just this part via a package `!remove` instead of duplicating the
+  # whole intake_impossible script. Behaviour for HA builds is unchanged.
+  - id: notify_intake_impossible
+    then:
       - homeassistant.service:
           service: persistent_notification.create
           data:
             title: ${device_name}
           data_template:
             message: Fan direction Intake could not be set (Probably due to cold temperatures outside)
-      - delay: 5s # cooldown to not send multiple notifications on error led toggling
 
 
             
