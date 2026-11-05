@@ -468,11 +468,10 @@ script:
       - globals.set:
           id: direction
           value: '0'
-      - homeassistant.service:
-          service: persistent_notification.create
+      - homeassistant.action:
+          action: persistent_notification.create
           data:
             title: ${device_name}
-          data_template:
             message: Fan direction Intake could not be set (Probably due to cold temperatures outside)
       - delay: 5s # cooldown to not send multiple notifications on error led toggling
 
