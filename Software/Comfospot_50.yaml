@@ -437,11 +437,21 @@ script:
               time: 1000ms
               condition:
                 lambda: "return !(id(filter_change_needed).state);"
+          timeout: 15s
       - if:
           condition:
             lambda: "return !(id(filter_change_needed).state);"
           then:
             - lambda: id(filter_changed_at) = (uint32_t) id(my_time).timestamp_now();
+          else:
+            - logger.log:
+                level: WARN
+                format: "script reset_filter: filter LED still on, reset not accepted"
+            - homeassistant.action:
+                action: persistent_notification.create
+                data:
+                  title: ${device_name}
+                  message: Filter reset was not accepted by the unit (filter LED still on). Please try again.
       - logger.log: "script reset_filter: finished"
       - lambda: id(button_manipulation) = false;
 
