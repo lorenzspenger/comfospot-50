@@ -35,12 +35,17 @@ esphome:
           value: "-1"
       - script.execute: init
 
+# migrate the filter timestamp once from the old float global (see globals)
+      - lambda: |-
+          if (id(filter_changed_at) == 0 && id(timestamp_last_filter_change) > 0)
+            id(filter_changed_at) = (uint32_t) id(timestamp_last_filter_change);
+
 # initialize filter runtime
       - if:
           condition:
-            - lambda: 'return id(timestamp_last_filter_change) == 0;'
+            - lambda: 'return id(filter_changed_at) == 0;'
           then:
-            - lambda: id(timestamp_last_filter_change) = id(my_time).timestamp_now();
+            - lambda: id(filter_changed_at) = (uint32_t) id(my_time).timestamp_now();
 
 
 time:
@@ -70,6 +75,15 @@ globals:
     restore_value: false
     initial_value: 'false'
 
+  # Unix time of the last filter change. uint32_t: same 4 bytes as a float,
+  # exact to the second (a float rounds current timestamps to 128 s steps).
+  - id: filter_changed_at
+    type: uint32_t
+    restore_value: true
+    initial_value: '0'
+
+  # Legacy float version, only read once at boot to fill filter_changed_at.
+  # Can be removed once every device has booted this firmware.
   - id: timestamp_last_filter_change
     type: float
     restore_value: true
@@ -427,7 +441,7 @@ script:
           condition:
             lambda: "return !(id(filter_change_needed).state);"
           then:
-            - lambda: id(timestamp_last_filter_change) = id(my_time).timestamp_now();
+            - lambda: id(filter_changed_at) = (uint32_t) id(my_time).timestamp_now();
       - logger.log: "script reset_filter: finished"
       - lambda: id(button_manipulation) = false;
 
@@ -788,7 +802,7 @@ sensor:
     entity_category: "diagnostic"
     device_class: 'duration'
     unit_of_measurement: "s"
-    lambda: 'return (id(my_time).timestamp_now() - id(timestamp_last_filter_change));'
+    lambda: 'return (uint32_t) id(my_time).timestamp_now() - id(filter_changed_at);'
 
 fan:
   - platform: speed
