@@ -16,13 +16,20 @@
 #   gpio_led_error:           GPIO7  
 #   gpio_output_plus:         GPIO19
 #   gpio_output_minus:        GPIO18
+#
+# optional (default below):
+#   filter_max_lifetime:      filter lifetime at full fan speed, e.g. 90d
 
 
 ######################################################
 ######################################################
 
+substitutions:
+  filter_max_lifetime: 90d
 
 esphome:
+  # filter_lifetime sensor platform is new in 2026.11
+  min_version: 2026.11.0
   on_shutdown:
     # priority: 700
     then:
@@ -34,24 +41,6 @@ esphome:
           id: current_set_speed
           value: "-1"
       - script.execute: init
-
-# migrate the filter timestamp once from the old float global (see globals)
-      - lambda: |-
-          if (id(filter_changed_at) == 0 && id(timestamp_last_filter_change) > 0)
-            id(filter_changed_at) = (uint32_t) id(timestamp_last_filter_change);
-
-# initialize filter runtime
-      - if:
-          condition:
-            - lambda: 'return id(filter_changed_at) == 0;'
-          then:
-            - lambda: id(filter_changed_at) = (uint32_t) id(my_time).timestamp_now();
-
-
-time:
-  - platform: homeassistant
-    id: my_time
-    timezone: Europe/Berlin
 
 
 globals:
@@ -74,20 +63,6 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
-
-  # Unix time of the last filter change. uint32_t: same 4 bytes as a float,
-  # exact to the second (a float rounds current timestamps to 128 s steps).
-  - id: filter_changed_at
-    type: uint32_t
-    restore_value: true
-    initial_value: '0'
-
-  # Legacy float version, only read once at boot to fill filter_changed_at.
-  # Can be removed once every device has booted this firmware.
-  - id: timestamp_last_filter_change
-    type: float
-    restore_value: true
-    initial_value: '1699133782'
 
     # 0 = exchange, 1 = intake, 2 = exhaust
   - id: direction
@@ -409,9 +384,6 @@ script:
   - id: reset_filter_script
     then:
       - lambda: id(button_manipulation) = true;
-      - sensor.template.publish:
-          id: sensor_runtime_filter
-          state: 0
       - wait_until:
           condition:
             for: 
@@ -442,7 +414,8 @@ script:
           condition:
             lambda: "return !(id(filter_change_needed).state);"
           then:
-            - lambda: id(filter_changed_at) = (uint32_t) id(my_time).timestamp_now();
+            - filter_lifetime.reset_filter:
+                id: filter_life
           else:
             - logger.log:
                 level: WARN
@@ -803,16 +776,19 @@ sensor:
     # update_interval: 1s
     lambda: 'return id(current_fan_speed);'
 
-  - platform: template
-    id: sensor_runtime_filter
-    disabled_by_default: true
-    icon: mdi:air-filter
-    name: "Runtime Filter"
-    accuracy_decimals: 0
-    entity_category: "diagnostic"
-    device_class: 'duration'
-    unit_of_measurement: "s"
-    lambda: 'return (uint32_t) id(my_time).timestamp_now() - id(filter_changed_at);'
+  # Fan-speed-weighted filter runtime, counted on the device and kept across reboots.
+  # Speed 1-4 counts as 25-100 %; off (0) and unknown (-1) don't count.
+  # Reset by the "Reset Filter" button once the unit accepts the reset.
+  - platform: filter_lifetime
+    id: filter_life
+    name: "Filter Life"
+    max_lifetime: ${filter_max_lifetime}
+    current_speed: !lambda 'return id(current_fan_speed) * 25.0f;'
+    runtime_hours:
+      name: "Runtime Filter"
+      entity_category: "diagnostic"
+    remaining_days:
+      name: "Filter Remaining"
 
 fan:
   - platform: speed
